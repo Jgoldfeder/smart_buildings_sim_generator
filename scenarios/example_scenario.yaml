@@ -10,10 +10,10 @@ output_base_dir: scenarios      # Base directory for output (scenario created in
 
 # Floor plan generation parameters
 floor_plan:
-  width: 200                    # Grid width in cells
-  height: 150                   # Grid height in cells
-  num_floors: 3                 # Number of floors (stacked vertically)
-  min_room_size: 30             # Minimum room dimension in cells
+  width: 600                    # Grid width in cells
+  height: 300                   # Grid height in cells
+  num_floors: 2                 # Number of floors (stacked vertically)
+  min_room_size: 40             # Minimum room dimension in cells
   max_room_size: 60             # Maximum room dimension before forcing split
   wall_thickness: 1             # Thickness of exterior walls
   door_width: 2                 # Width of doors between rooms
@@ -26,7 +26,7 @@ floor_plan:
 
 # AHU (Air Handling Unit) configuration
 ahu:
-  num_ahus: 4                   # Number of air handling units
+  num_ahus: 2                   # Number of air handling units
   max_air_flow_rate: 10.0       # Maximum air flow rate (m^3/s)
   recirculation_ratio: 0.3      # Fraction of air recirculated (0-1)
   heating_setpoint: 285.0       # AHU heating temperature setpoint (Kelvin)
