@@ -14,12 +14,13 @@ authors = [
 ]
 
 dependencies = [
-    "numpy",
-    "pandas",
+    "numpy<2",
+    "pandas<3",
     "matplotlib",
     "tensorflow>=2.15,<2.16",
     "tensorflow-probability==0.22.0",
     "tf-agents==0.18.0",
+    "typing_extensions>=4.12",
     "gin-config",
     "opencv-python",
     "protobuf",
