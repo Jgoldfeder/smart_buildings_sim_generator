@@ -1,18 +1,21 @@
-# Minimal Scenario Configuration
-# Only specify what you want to change from defaults
-
-name: minimal_test
-seed: 123
+name: "my_scenario"
+seed: 42
 
 floor_plan:
+  num_floors: 2
   width: 600
   height: 300
   min_room_size: 40
-  building_shape: h_shape
+  building_shape: "h_shape"
 
 ahu:
   num_ahus: 2
 
+simulation:
+  start_timestamp: "2023-07-10 06:00"
+  num_days_in_episode: 7
+  occupants_per_zone: 3
+
 weather:
-  high_temp: 300.0  # ~27C / 80F
-  low_temp: 285.0   # ~12C / 54F
+  high_temp: 310
+  low_temp: 280
