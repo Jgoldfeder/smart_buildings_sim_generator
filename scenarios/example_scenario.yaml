@@ -1,0 +1,82 @@
+# Example HVAC Simulation Scenario Configuration
+# ================================================
+# This file defines all parameters for generating a complete simulation scenario.
+# Run with: python -m smart_buildings.smart_control.utils.scenario_generator scenarios/example_scenario.yaml
+
+# Scenario metadata
+name: summer_office_3floor     # Unique name for this scenario (used as output directory name)
+seed: 42                        # Random seed for reproducibility (optional)
+output_base_dir: scenarios      # Base directory for output (scenario created in {output_base_dir}/{name}/)
+
+# Floor plan generation parameters
+floor_plan:
+  width: 200                    # Grid width in cells
+  height: 150                   # Grid height in cells
+  num_floors: 3                 # Number of floors (stacked vertically)
+  min_room_size: 30             # Minimum room dimension in cells
+  max_room_size: 60             # Maximum room dimension before forcing split
+  wall_thickness: 1             # Thickness of exterior walls
+  door_width: 2                 # Width of doors between rooms
+  split_variance: 0.3           # Randomness in room split positions (0-1)
+  building_shape: h_shape       # Building outline shape
+  # Options: rectangle, trapezoid, h_shape, t_shape, pentagon, oval,
+  #          u_shape, parallelogram, semicircle, triangle, composite
+  shape_ratio: 0.33             # For H/T/U shapes: controls thick vs thin parts (0.1-0.5)
+  composite_coverage: 0.6       # For composite shape: minimum canvas coverage (0.0-1.0)
+
+# AHU (Air Handling Unit) configuration
+ahu:
+  num_ahus: 4                   # Number of air handling units
+  max_air_flow_rate: 10.0       # Maximum air flow rate (m^3/s)
+  recirculation_ratio: 0.3      # Fraction of air recirculated (0-1)
+  heating_setpoint: 285.0       # AHU heating temperature setpoint (Kelvin)
+  cooling_setpoint: 298.0       # AHU cooling temperature setpoint (Kelvin)
+  fan_static_pressure: 10000.0  # Fan static pressure (Pa)
+  fan_efficiency: 0.9           # Fan efficiency (0-1)
+
+# Weather/ambient conditions
+weather:
+  high_temp: 308.0              # Maximum ambient temperature (Kelvin) ~35C/95F
+  low_temp: 295.0               # Minimum ambient temperature (Kelvin) ~22C/72F
+  convection_coefficient: 100.0 # Heat transfer coefficient with outside air
+
+# Hot water system configuration
+hot_water_system:
+  pump_differential_head: 6.0   # Water pump differential head (m)
+  pump_efficiency: 0.98         # Pump efficiency (0-1)
+  reheat_water_setpoint: 360.0  # Reheat water temperature setpoint (Kelvin)
+  boiler_heating_rate: 0.5      # Boiler heating rate
+  boiler_cooling_rate: 0.1      # Boiler cooling rate
+
+# Temperature setpoint schedule
+setpoint_schedule:
+  morning_start_hour: 6         # Hour when "day" mode begins (0-23)
+  evening_start_hour: 19        # Hour when "night" mode begins (0-23)
+  heating_setpoint_day: 294.0   # Daytime heating setpoint (Kelvin) ~21C/70F
+  cooling_setpoint_day: 297.0   # Daytime cooling setpoint (Kelvin) ~24C/75F
+  heating_setpoint_night: 289.0 # Nighttime heating setpoint (Kelvin) ~16C/61F
+  cooling_setpoint_night: 300.0 # Nighttime cooling setpoint (Kelvin) ~27C/80F
+  time_zone: "US/Pacific"       # Timezone for schedule
+
+# Reward function weights
+reward:
+  max_productivity_personhour_usd: 300.0   # Max productivity value per person-hour
+  min_productivity_personhour_usd: 100.0   # Min productivity value per person-hour
+  productivity_midpoint_delta: 0.5         # Temperature delta at 50% productivity
+  productivity_decay_stiffness: 4.3        # How quickly productivity drops with temp deviation
+  max_electricity_rate: 160000.0           # Max electricity consumption for normalization
+  max_natural_gas_rate: 400000.0           # Max gas consumption for normalization
+  productivity_weight: 0.2                 # Weight for productivity in reward (0-1)
+  energy_cost_weight: 0.4                  # Weight for energy cost in reward (0-1)
+  carbon_emission_weight: 0.4              # Weight for carbon emissions in reward (0-1)
+
+# Simulation parameters
+simulation:
+  time_step_sec: 300            # Simulation time step in seconds (5 min default)
+  convergence_threshold: 0.01   # Temperature convergence threshold
+  iteration_limit: 100          # Max iterations per time step
+  iteration_warning: 20         # Warn if iterations exceed this
+  start_timestamp: "2023-07-10 06:00"  # Simulation start time (Monday)
+  num_days_in_episode: 21       # Episode length in days
+  discount_factor: 0.9          # RL discount factor
+  occupants_per_zone: 1         # Number of occupants per zone

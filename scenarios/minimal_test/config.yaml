@@ -1,0 +1,17 @@
+# Minimal Scenario Configuration
+# Only specify what you want to change from defaults
+
+name: minimal_test
+seed: 123
+
+floor_plan:
+  width: 100
+  height: 80
+  building_shape: rectangle
+
+ahu:
+  num_ahus: 2
+
+weather:
+  high_temp: 300.0  # ~27C / 80F
+  low_temp: 285.0   # ~12C / 54F
