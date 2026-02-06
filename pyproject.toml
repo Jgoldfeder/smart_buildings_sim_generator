@@ -32,6 +32,7 @@ dependencies = [
     "requests",
     "plotly",
     "mediapy",
+    "ipython<8.18",
     "jupyter",
     "pyyaml",
 ]
