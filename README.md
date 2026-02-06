@@ -50,6 +50,8 @@ floor_plan:
   num_floors: 2
   num_rooms_per_floor: 8
   building_size: [100, 100]
+  building_shape: "rectangle"  # or "l_shape", "t_shape", "u_shape"
+  num_ahus: 2
 
 simulation:
   start_timestamp: "2023-07-10 06:00"
