@@ -5,9 +5,10 @@ name: minimal_test
 seed: 123
 
 floor_plan:
-  width: 100
-  height: 80
-  building_shape: rectangle
+  width: 600
+  height: 300
+  min_room_size: 40
+  building_shape: h_shape
 
 ahu:
   num_ahus: 2
