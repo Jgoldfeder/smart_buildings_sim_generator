@@ -49,8 +49,9 @@ seed: 42
 floor_plan:
   num_floors: 2
   num_rooms_per_floor: 8
-  building_size: [100, 100]
-  building_shape: "rectangle"  # or "l_shape", "t_shape", "u_shape"
+  building_size: [600, 300]
+  min_room_size: 40
+  building_shape: "h_shape"  # rectangle, trapezoid, h_shape, t_shape, pentagon, oval, u_shape, parallelogram, semicircle, triangle
   num_ahus: 2
 
 simulation:
