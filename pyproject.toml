@@ -33,6 +33,7 @@ dependencies = [
     "plotly",
     "seaborn",
     "scipy",
+    "scikit-learn",
     "mediapy",
     "ipython<8.18",
     "jupyter",
