@@ -14,11 +14,11 @@ authors = [
 ]
 
 dependencies = [
-    "numpy<2",
+    "numpy==1.26.4",
     "pandas",
     "matplotlib",
-    "tensorflow==2.15.1",
-    "tensorflow-probability==0.22.0",
+    "tensorflow==2.15.0",
+    "tensorflow-probability==0.22.1",
     "tf-agents==0.18.0",
     "gin-config",
     "opencv-python",
@@ -35,7 +35,6 @@ dependencies = [
     "scipy",
     "scikit-learn",
     "mediapy",
-    "ipython<8.18",
     "jupyter",
     "pyyaml",
 ]
