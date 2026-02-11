@@ -50,6 +50,22 @@ def send_report(report_dict):
     return resp.json()
 
 
+def send_heartbeat(worker_id, job_id, step, total_steps):
+    """Send progress update to server."""
+    try:
+        from datetime import datetime
+        payload = {
+            "worker_id": worker_id,
+            "job": job_id,
+            "step": step,
+            "total_steps": total_steps,
+            "timestamp": datetime.now().isoformat(),
+        }
+        requests.post(f"{SERVER}/heartbeat", json=payload, headers=HEADERS, timeout=5)
+    except:
+        pass  # Don't fail if heartbeat fails
+
+
 def upload_results(building_name, weather, policy, policy_dir):
     """Upload result files to central server."""
     files = {}
@@ -124,11 +140,13 @@ def get_current_setpoints(env):
     return schedule.get_temperature_window(timestamp)
 
 
-def run_policy(env, tracker, policy, steps):
-    """Run a baseline policy."""
+def run_policy(env, tracker, policy, steps, worker_id=None, job_id=None):
+    """Run a baseline policy with periodic heartbeats."""
     tracker.reset()
+    last_heartbeat = time.time()
+    heartbeat_interval = 300  # 5 minutes
 
-    for _ in range(steps):
+    for step in range(steps):
         if policy == "all_off":
             action = make_action(env, discrete_value=0, temp_value=-1, pressure_value=-1, water_value=-1)
         elif policy == "all_on":
@@ -146,6 +164,11 @@ def run_policy(env, tracker, policy, steps):
             raise ValueError(f"Unknown policy: {policy}")
         tracker.step(action)
 
+        # Send heartbeat every 5 minutes
+        if worker_id and time.time() - last_heartbeat > heartbeat_interval:
+            send_heartbeat(worker_id, job_id, step + 1, steps)
+            last_heartbeat = time.time()
+
 
 def run_task(task, thread_id):
     """Run a single task (building + weather + policy)."""
@@ -162,7 +185,12 @@ def run_task(task, thread_id):
     building_name = Path(building_path).stem
 
     job_id = f"{building_name}/{weather}/{policy}"
+    import socket
+    worker_id = f"{socket.gethostname()}:thread-{thread_id}"
     print(f"[Thread {thread_id}] Starting: {job_id}")
+
+    # Send initial heartbeat
+    send_heartbeat(worker_id, job_id, 0, STEPS)
 
     try:
         # Generate scenario
@@ -173,7 +201,7 @@ def run_task(task, thread_id):
         tracker = SimulationTracker(env, vmin=280, vmax=310)
 
         # Run policy
-        run_policy(env, tracker, policy, STEPS)
+        run_policy(env, tracker, policy, STEPS, worker_id=worker_id, job_id=job_id)
 
         # Create output directory
         policy_dir = Path(RESULTS_DIR) / building_name / weather / policy

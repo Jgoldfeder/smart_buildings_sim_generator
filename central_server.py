@@ -160,6 +160,9 @@ def report():
     return jsonify(ok=True), 200
 
 
+# Track active workers and their progress
+active_workers = {}
+
 @app.route('/status', methods=['GET'])
 def status():
     """Get current queue status."""
@@ -169,7 +172,26 @@ def status():
             "completed": len(completed_jobs),
             "failed": len(failed_jobs),
             "failed_jobs": failed_jobs[-10:],  # Last 10 failures
+            "active_workers": active_workers,
         }), 200
+
+
+@app.route('/heartbeat', methods=['POST'])
+def heartbeat():
+    """Worker sends progress update."""
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify(error="expected JSON"), 400
+
+    worker_id = data.get('worker_id')
+    with lock:
+        active_workers[worker_id] = {
+            "job": data.get('job'),
+            "step": data.get('step'),
+            "total_steps": data.get('total_steps'),
+            "last_update": data.get('timestamp'),
+        }
+    return jsonify(ok=True), 200
 
 
 @app.route('/requeue_failed', methods=['POST'])
