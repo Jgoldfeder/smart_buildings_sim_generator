@@ -726,10 +726,18 @@ class MultiFloorPlan:
         return floor_plan_path, zone_map_path
 
     def get_num_rooms(self, padding: int = 5) -> int:
-        """Count total number of rooms across all floors."""
+        """Count total number of rooms in the stacked floor plan.
+
+        Uses connected components on the full stacked zone map to match
+        how the simulator discovers rooms.
+        """
+        import cv2
         if not self.floors:
             raise ValueError("Must call generate() first")
-        return sum(f.get_num_rooms(padding=padding) for f in self.floors)
+        zone_map = self.export_zone_map(padding=padding)
+        binary = np.uint8(zone_map == 0)
+        num_labels, _ = cv2.connectedComponents(binary, connectivity=4)
+        return num_labels - 1  # Subtract background label
 
     def get_room_labels(self, padding: int = 5) -> Tuple[np.ndarray, List[str]]:
         """Get room labels for the stacked floor plan.

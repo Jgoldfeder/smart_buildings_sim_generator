@@ -34,6 +34,7 @@ Example usage:
 
 import os
 import random
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -47,6 +48,12 @@ from smart_buildings.smart_control.utils.floor_generator import (
     assign_rooms_to_ahus,
     OBSERVATION_NORMALIZER_CONFIG,
 )
+
+# Lock to prevent race conditions when multiple threads generate floor plans
+# with seeded random number generators. Without this lock, concurrent threads
+# can interleave their random calls, causing different floor plans to be
+# generated even with the same seed.
+_floor_plan_generation_lock = threading.Lock()
 
 
 @dataclass
@@ -248,6 +255,7 @@ def load_scenario_from_parts(
     building_path: str,
     weather_path_or_name: str,
     output_base_dir: Optional[str] = None,
+    policy: Optional[str] = None,
 ) -> ScenarioConfig:
     """Load a scenario from separate building and weather configs.
 
@@ -255,6 +263,7 @@ def load_scenario_from_parts(
         building_path: Path to the building YAML configuration file.
         weather_path_or_name: Path to weather YAML or preset name (e.g., "hot_summer").
         output_base_dir: Override for output directory (optional).
+        policy: Policy name to include in output path (optional, prevents race conditions).
 
     Returns:
         ScenarioConfig with building + weather merged.
@@ -273,8 +282,11 @@ def load_scenario_from_parts(
     elif os.path.sep in weather_path_or_name:
         weather_name = os.path.basename(weather_path_or_name)
 
-    # Include weather in output path to avoid race conditions
-    config.name = f"{config.name}/{weather_name}"
+    # Include weather (and policy if provided) in output path to avoid race conditions
+    if policy:
+        config.name = f"{config.name}/{weather_name}/{policy}"
+    else:
+        config.name = f"{config.name}/{weather_name}"
 
     # Override output dir if specified
     if output_base_dir:
@@ -689,59 +701,63 @@ def generate_scenario(config_path: str) -> Dict[str, Any]:
     # Load configuration
     config = load_config(config_path)
 
-    # Set random seed if specified
-    if config.seed is not None:
-        random.seed(config.seed)
-        np.random.seed(config.seed)
-
     # Create output directory
     output_dir = os.path.join(config.output_base_dir, config.name)
     os.makedirs(output_dir, exist_ok=True)
 
-    # Generate floor plan
-    fp = config.floor_plan
-    if fp.num_floors > 1:
-        generator = MultiFloorPlan(
-            width=fp.width,
-            height=fp.height,
-            num_floors=fp.num_floors,
-            min_room_size=fp.min_room_size,
-            max_room_size=fp.max_room_size,
-            wall_thickness=fp.wall_thickness,
-            door_width=fp.door_width,
-            split_variance=fp.split_variance,
-            building_shape=fp.building_shape,
-            shape_ratio=fp.shape_ratio,
-            composite_coverage=fp.composite_coverage,
+    # Use lock to prevent race conditions with seeded random number generators.
+    # Without this, concurrent threads can interleave random calls, causing
+    # different floor plans to be generated even with the same seed.
+    with _floor_plan_generation_lock:
+        # Set random seed if specified (must be inside lock)
+        if config.seed is not None:
+            random.seed(config.seed)
+            np.random.seed(config.seed)
+
+        # Generate floor plan
+        fp = config.floor_plan
+        if fp.num_floors > 1:
+            generator = MultiFloorPlan(
+                width=fp.width,
+                height=fp.height,
+                num_floors=fp.num_floors,
+                min_room_size=fp.min_room_size,
+                max_room_size=fp.max_room_size,
+                wall_thickness=fp.wall_thickness,
+                door_width=fp.door_width,
+                split_variance=fp.split_variance,
+                building_shape=fp.building_shape,
+                shape_ratio=fp.shape_ratio,
+                composite_coverage=fp.composite_coverage,
+            )
+        else:
+            generator = BSPFloorPlan(
+                width=fp.width,
+                height=fp.height,
+                min_room_size=fp.min_room_size,
+                max_room_size=fp.max_room_size,
+                wall_thickness=fp.wall_thickness,
+                door_width=fp.door_width,
+                split_variance=fp.split_variance,
+                building_shape=fp.building_shape,
+                shape_ratio=fp.shape_ratio,
+                composite_coverage=fp.composite_coverage,
+            )
+
+        generator.generate()
+
+        # Save floor plan and zone map (still inside lock to prevent partial writes)
+        floor_plan_path = os.path.join(output_dir, "floor_plan.npy")
+        zone_map_path = os.path.join(output_dir, "zone_map.npy")
+        generator.save_for_simulator(floor_plan_path, zone_map_path)
+
+        # Get room count and assign to AHUs (uses seeded random, so keep in lock)
+        num_rooms = generator.get_num_rooms()
+        ahu_assignments = assign_rooms_to_ahus(
+            num_rooms,
+            config.ahu.num_ahus,
+            seed=config.seed
         )
-    else:
-        generator = BSPFloorPlan(
-            width=fp.width,
-            height=fp.height,
-            min_room_size=fp.min_room_size,
-            max_room_size=fp.max_room_size,
-            wall_thickness=fp.wall_thickness,
-            door_width=fp.door_width,
-            split_variance=fp.split_variance,
-            building_shape=fp.building_shape,
-            shape_ratio=fp.shape_ratio,
-            composite_coverage=fp.composite_coverage,
-        )
-
-    generator.generate()
-
-    # Save floor plan and zone map
-    floor_plan_path = os.path.join(output_dir, "floor_plan.npy")
-    zone_map_path = os.path.join(output_dir, "zone_map.npy")
-    generator.save_for_simulator(floor_plan_path, zone_map_path)
-
-    # Get room count and assign to AHUs
-    num_rooms = generator.get_num_rooms()
-    ahu_assignments = assign_rooms_to_ahus(
-        num_rooms,
-        config.ahu.num_ahus,
-        seed=config.seed
-    )
 
     # Generate and save gin config
     gin_config = _generate_gin_config(
@@ -785,59 +801,63 @@ def generate_scenario_from_config(config: ScenarioConfig) -> Dict[str, Any]:
     Returns:
         Same as generate_scenario().
     """
-    # Set random seed if specified
-    if config.seed is not None:
-        random.seed(config.seed)
-        np.random.seed(config.seed)
-
     # Create output directory
     output_dir = os.path.join(config.output_base_dir, config.name)
     os.makedirs(output_dir, exist_ok=True)
 
-    # Generate floor plan
-    fp = config.floor_plan
-    if fp.num_floors > 1:
-        generator = MultiFloorPlan(
-            width=fp.width,
-            height=fp.height,
-            num_floors=fp.num_floors,
-            min_room_size=fp.min_room_size,
-            max_room_size=fp.max_room_size,
-            wall_thickness=fp.wall_thickness,
-            door_width=fp.door_width,
-            split_variance=fp.split_variance,
-            building_shape=fp.building_shape,
-            shape_ratio=fp.shape_ratio,
-            composite_coverage=fp.composite_coverage,
+    # Use lock to prevent race conditions with seeded random number generators.
+    # Without this, concurrent threads can interleave random calls, causing
+    # different floor plans to be generated even with the same seed.
+    with _floor_plan_generation_lock:
+        # Set random seed if specified (must be inside lock)
+        if config.seed is not None:
+            random.seed(config.seed)
+            np.random.seed(config.seed)
+
+        # Generate floor plan
+        fp = config.floor_plan
+        if fp.num_floors > 1:
+            generator = MultiFloorPlan(
+                width=fp.width,
+                height=fp.height,
+                num_floors=fp.num_floors,
+                min_room_size=fp.min_room_size,
+                max_room_size=fp.max_room_size,
+                wall_thickness=fp.wall_thickness,
+                door_width=fp.door_width,
+                split_variance=fp.split_variance,
+                building_shape=fp.building_shape,
+                shape_ratio=fp.shape_ratio,
+                composite_coverage=fp.composite_coverage,
+            )
+        else:
+            generator = BSPFloorPlan(
+                width=fp.width,
+                height=fp.height,
+                min_room_size=fp.min_room_size,
+                max_room_size=fp.max_room_size,
+                wall_thickness=fp.wall_thickness,
+                door_width=fp.door_width,
+                split_variance=fp.split_variance,
+                building_shape=fp.building_shape,
+                shape_ratio=fp.shape_ratio,
+                composite_coverage=fp.composite_coverage,
+            )
+
+        generator.generate()
+
+        # Save floor plan and zone map (still inside lock to prevent partial writes)
+        floor_plan_path = os.path.join(output_dir, "floor_plan.npy")
+        zone_map_path = os.path.join(output_dir, "zone_map.npy")
+        generator.save_for_simulator(floor_plan_path, zone_map_path)
+
+        # Get room count and assign to AHUs (uses seeded random, so keep in lock)
+        num_rooms = generator.get_num_rooms()
+        ahu_assignments = assign_rooms_to_ahus(
+            num_rooms,
+            config.ahu.num_ahus,
+            seed=config.seed
         )
-    else:
-        generator = BSPFloorPlan(
-            width=fp.width,
-            height=fp.height,
-            min_room_size=fp.min_room_size,
-            max_room_size=fp.max_room_size,
-            wall_thickness=fp.wall_thickness,
-            door_width=fp.door_width,
-            split_variance=fp.split_variance,
-            building_shape=fp.building_shape,
-            shape_ratio=fp.shape_ratio,
-            composite_coverage=fp.composite_coverage,
-        )
-
-    generator.generate()
-
-    # Save floor plan and zone map
-    floor_plan_path = os.path.join(output_dir, "floor_plan.npy")
-    zone_map_path = os.path.join(output_dir, "zone_map.npy")
-    generator.save_for_simulator(floor_plan_path, zone_map_path)
-
-    # Get room count and assign to AHUs
-    num_rooms = generator.get_num_rooms()
-    ahu_assignments = assign_rooms_to_ahus(
-        num_rooms,
-        config.ahu.num_ahus,
-        seed=config.seed
-    )
 
     # Generate and save gin config
     gin_config = _generate_gin_config(

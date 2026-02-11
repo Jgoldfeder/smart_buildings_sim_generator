@@ -194,8 +194,8 @@ def run_task(task, thread_id):
     send_heartbeat(worker_id, job_id, 0, STEPS, task=task)
 
     try:
-        # Generate scenario
-        scenario_config = load_scenario_from_parts(building_path, weather, RESULTS_DIR)
+        # Generate scenario (include policy in path to avoid race conditions)
+        scenario_config = load_scenario_from_parts(building_path, weather, RESULTS_DIR, policy=policy)
         result = generate_scenario_from_config(scenario_config)
 
         env = get_env(result)
