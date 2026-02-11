@@ -1028,6 +1028,88 @@ class SimulationTracker:
         display(image)
         return image
 
+    def create_video(
+        self,
+        output_path: str = "simulation.mp4",
+        fps: int = 10,
+        show_progress: bool = True,
+    ) -> str:
+        """Create a video from temperature snapshots.
+
+        Args:
+            output_path: Output file path. Supports .mp4, .gif, .avi.
+            fps: Frames per second.
+            show_progress: Whether to show progress bar.
+
+        Returns:
+            Path to the created video file.
+        """
+        import numpy as np
+        from PIL import Image, ImageDraw, ImageFont
+
+        if not self.temp_snapshots:
+            raise ValueError("No snapshots to create video from. Run simulation first.")
+
+        # Determine output format
+        ext = output_path.lower().split('.')[-1]
+        if ext not in ('mp4', 'gif', 'avi'):
+            raise ValueError(f"Unsupported format: {ext}. Use mp4, gif, or avi.")
+
+        frames = []
+        n_frames = len(self.temp_snapshots)
+
+        iterator = range(n_frames)
+        if show_progress:
+            try:
+                from tqdm import tqdm
+                iterator = tqdm(iterator, desc="Rendering frames")
+            except ImportError:
+                pass
+
+        for i in iterator:
+            temps = self.temp_snapshots[i]
+            frame = self.renderer.render(temps, cmap='bwr', vmin=self.vmin, vmax=self.vmax).convert('RGB')
+
+            # Add timestamp overlay if available
+            if i < len(self.timestamps):
+                draw = ImageDraw.Draw(frame)
+                ts_str = self.timestamps[i].strftime('%Y-%m-%d %H:%M')
+                # Try to use a monospace font, fall back to default
+                try:
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 16)
+                except:
+                    font = ImageFont.load_default()
+                draw.rectangle([5, 5, 180, 25], fill='white')
+                draw.text((10, 7), ts_str, fill='black', font=font)
+
+            frames.append(np.array(frame))
+
+        # Write video
+        if ext == 'gif':
+            # Use PIL for GIF
+            pil_frames = [Image.fromarray(f) for f in frames]
+            pil_frames[0].save(
+                output_path,
+                save_all=True,
+                append_images=pil_frames[1:],
+                duration=int(1000 / fps),
+                loop=0,
+            )
+        else:
+            # Use imageio for mp4/avi
+            try:
+                import imageio
+            except ImportError:
+                raise ImportError("imageio required for mp4/avi. Install with: pip install imageio[ffmpeg]")
+
+            writer = imageio.get_writer(output_path, fps=fps)
+            for frame in frames:
+                writer.append_data(frame)
+            writer.close()
+
+        print(f"Video saved to {output_path} ({n_frames} frames, {fps} fps)")
+        return output_path
+
     def plot(self, color_by_ahu: bool = False):
         """Plot all charts (temps, rewards, occupancy, AHU diagnostics, reward components).
 
