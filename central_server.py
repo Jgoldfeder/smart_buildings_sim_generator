@@ -184,13 +184,21 @@ def heartbeat():
         return jsonify(error="expected JSON"), 400
 
     worker_id = data.get('worker_id')
+    step = data.get('step')
+    total_steps = data.get('total_steps')
+    job = data.get('job')
+
     with lock:
         active_workers[worker_id] = {
-            "job": data.get('job'),
-            "step": data.get('step'),
-            "total_steps": data.get('total_steps'),
+            "job": job,
+            "step": step,
+            "total_steps": total_steps,
             "last_update": data.get('timestamp'),
         }
+
+    pct = (step / total_steps * 100) if total_steps else 0
+    print(f"[{worker_id}] {job}: {step}/{total_steps} ({pct:.1f}%)")
+
     return jsonify(ok=True), 200
 
 
