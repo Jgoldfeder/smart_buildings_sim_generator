@@ -144,7 +144,7 @@ def run_policy(env, tracker, policy, steps, worker_id=None, job_id=None):
     """Run a baseline policy with periodic heartbeats."""
     tracker.reset()
     last_heartbeat = time.time()
-    heartbeat_interval = 300  # 5 minutes
+    heartbeat_interval = 60  # 1 minute
 
     for step in range(steps):
         if policy == "all_off":
