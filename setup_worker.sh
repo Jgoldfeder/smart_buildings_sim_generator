@@ -6,27 +6,21 @@ set -e
 
 echo "Setting up smart buildings worker environment..."
 
-# Install system dependencies (needed for pygame/tf-agents)
-if command -v apt-get &> /dev/null; then
-    echo "Installing system dependencies..."
-    sudo apt-get update
-    sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
-fi
+# Create conda environment with Python 3.11 (required for tensorflow 2.15)
+conda create -n sbsim python=3.11 -y
+eval "$(conda shell.bash hook)"
+conda activate sbsim
 
-# Create virtual environment
-python3 -m venv venv
-echo "Created virtual environment"
-
-# Activate and install
-source venv/bin/activate
+# Install from frozen requirements
 pip install --upgrade pip
+pip install -r requirements-frozen.txt
 pip install -e .
 pip install flask  # for central server
 
 echo ""
 echo "Setup complete!"
 echo ""
-echo "To activate: source venv/bin/activate"
+echo "To activate: conda activate sbsim"
 echo ""
 echo "To run central server:"
 echo "  python central_server.py"
