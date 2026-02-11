@@ -12,6 +12,9 @@ Usage:
 import os
 import glob
 import base64
+import time
+import threading
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, abort
 from queue import Queue
 from threading import Lock
@@ -162,6 +165,7 @@ def report():
 
 # Track active workers and their progress
 active_workers = {}
+STALE_TIMEOUT = 300  # 5 minutes - requeue job if no heartbeat
 
 @app.route('/status', methods=['GET'])
 def status():
@@ -187,19 +191,44 @@ def heartbeat():
     step = data.get('step')
     total_steps = data.get('total_steps')
     job = data.get('job')
+    task = data.get('task')  # Full task dict for recovery
 
     with lock:
         active_workers[worker_id] = {
             "job": job,
+            "task": task,
             "step": step,
             "total_steps": total_steps,
-            "last_update": data.get('timestamp'),
+            "last_update": time.time(),  # Use server time for consistency
         }
 
     pct = (step / total_steps * 100) if total_steps else 0
-    print(f"[{worker_id}] {job}: {step}/{total_steps} ({pct:.1f}%)")
+    print(f"[{worker_id}] {job}: {step}/{total_steps} ({pct:.1f}%)", flush=True)
 
     return jsonify(ok=True), 200
+
+
+def check_stale_workers():
+    """Background thread to requeue jobs from stale workers."""
+    while True:
+        time.sleep(60)  # Check every minute
+        now = time.time()
+        stale = []
+
+        with lock:
+            for worker_id, info in list(active_workers.items()):
+                if now - info.get('last_update', 0) > STALE_TIMEOUT:
+                    stale.append((worker_id, info))
+                    del active_workers[worker_id]
+
+        for worker_id, info in stale:
+            task = info.get('task')
+            if task:
+                with lock:
+                    job_key = get_job_key(task)
+                    if job_key not in completed_jobs:
+                        task_queue.put(task)
+                        print(f"[STALE] Re-queued {info['job']} from {worker_id}", flush=True)
 
 
 @app.route('/requeue_failed', methods=['POST'])
@@ -261,7 +290,12 @@ if __name__ == '__main__':
     print(f"API Key: {VALID_API_KEY[:4]}...{VALID_API_KEY[-4:]}")
     print(f"Buildings dir: {BUILDINGS_DIR}")
     print(f"Results dir: {RESULTS_DIR}")
+    print(f"Stale timeout: {STALE_TIMEOUT}s")
     print()
+
+    # Start background thread to check for stale workers
+    stale_checker = threading.Thread(target=check_stale_workers, daemon=True)
+    stale_checker.start()
 
     # Listen on all interfaces so workers can connect
     app.run(host='0.0.0.0', port=5000)
