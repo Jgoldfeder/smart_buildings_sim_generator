@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 
 # Configuration
 API_KEY = os.environ.get("API_KEY", "smart-buildings-key-123")
-SERVER = os.environ.get("SERVER", "http://127.0.0.1:5000")
+SERVER = os.environ.get("SERVER", "http://128.59.145.47:5000")
 HEADERS = {"X-API-KEY": API_KEY}
 RESULTS_DIR = os.environ.get("RESULTS_DIR", "distributed_results")
 STEPS = int(os.environ.get("STEPS", 576))  # Default: 2 days
