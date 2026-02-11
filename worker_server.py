@@ -340,11 +340,6 @@ if __name__ == "__main__":
     print(f"Threads: {NUM_THREADS}")
     print()
 
-    # Preload data and models to avoid race conditions
-    print("Preloading datasets and models...")
-    from sbsim.smart_control.utils import classification_util
-    # Add any preloading here if needed
-
     threads = []
     for i in range(NUM_THREADS):
         t = threading.Thread(target=thread_main, args=(i,), daemon=True)
