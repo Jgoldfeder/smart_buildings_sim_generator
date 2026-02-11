@@ -116,9 +116,9 @@ class RewardConfig:
     productivity_decay_stiffness: float = 4.3
     max_electricity_rate: float = 160000.0
     max_natural_gas_rate: float = 400000.0
-    productivity_weight: float = 0.2
-    energy_cost_weight: float = 0.4
-    carbon_emission_weight: float = 0.4
+    productivity_weight: float = 0.6
+    energy_cost_weight: float = 0.2
+    carbon_emission_weight: float = 0.2
 
 
 @dataclass
@@ -334,6 +334,9 @@ building_exterior_properties/MaterialProperties:
   heat_capacity = %exterior_cv_heat_capacity
   density = %exterior_cv_density
 
+sim/BlendConvectionSimulator:
+  alpha = 0.1
+
 sim/FloorPlanBasedBuilding:
   cv_size_cm = %control_volume_cm
   floor_height_cm = %floor_height_cm
@@ -343,6 +346,7 @@ sim/FloorPlanBasedBuilding:
   building_exterior_properties = @building_exterior_properties/MaterialProperties()
   floor_plan_filepath = %floor_plan_filepath
   zone_map_filepath = %zone_map_filepath
+  convection_simulator = @sim/BlendConvectionSimulator()
 
 ##########################
 ### SETPOINT SCHEDULE
@@ -447,6 +451,7 @@ randomized_occupancy/RandomizedArrivalDepartureOccupancy:
   earliest_expected_departure_hour = 13
   latest_expected_departure_hour = 23
   time_step_sec = %time_step_sec
+  min_occupancy = 0.1
 
 SimulatorBuilding.simulator = @sim_building/TFSimulator()
 SimulatorBuilding.occupancy = @randomized_occupancy/RandomizedArrivalDepartureOccupancy()
@@ -671,6 +676,8 @@ def generate_scenario(config_path: str) -> Dict[str, Any]:
         'num_rooms': num_rooms,
         'num_ahus': config.ahu.num_ahus,
         'ahu_assignments': ahu_assignments,
+        'bsp': generator,
+        'config': config,
     }
 
 
@@ -750,6 +757,7 @@ def get_env(result: Dict[str, Any], reset: bool = True):
     from smart_buildings.smart_control.simulator import tf_simulator
     from smart_buildings.smart_control.simulator import randomized_arrival_departure_occupancy
     from smart_buildings.smart_control.simulator import simulator_building
+    from smart_buildings.smart_control.simulator import blend_convection_simulator
     from smart_buildings.smart_control.utils import observation_normalizer
     from smart_buildings.smart_control.utils import environment_utils
 
@@ -916,6 +924,18 @@ class SimulationTracker:
         self.ahu_log = []
         self.reward_components = []
 
+        self._step_count = 0
+
+    def reset(self):
+        """Reset tracker state and environment."""
+        self.env.reset()
+        self.rewards = []
+        self.occupancy = []
+        self.timestamps = []
+        self.temp_snapshots = []
+        self.zone_temps = []
+        self.ahu_log = []
+        self.reward_components = []
         self._step_count = 0
 
     def step(self, action: Dict[str, Any]):

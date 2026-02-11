@@ -36,8 +36,8 @@ ahu:
 
 # Weather/ambient conditions
 weather:
-  high_temp: 308.0              # Maximum ambient temperature (Kelvin) ~35C/95F
-  low_temp: 295.0               # Minimum ambient temperature (Kelvin) ~22C/72F
+  high_temp: 309.0              # Maximum ambient temperature (Kelvin) ~35C/95F
+  low_temp: 308.0               # Minimum ambient temperature (Kelvin) ~22C/72F
   convection_coefficient: 100.0 # Heat transfer coefficient with outside air
 
 # Hot water system configuration
@@ -66,9 +66,9 @@ reward:
   productivity_decay_stiffness: 4.3        # How quickly productivity drops with temp deviation
   max_electricity_rate: 160000.0           # Max electricity consumption for normalization
   max_natural_gas_rate: 400000.0           # Max gas consumption for normalization
-  productivity_weight: 0.2                 # Weight for productivity in reward (0-1)
-  energy_cost_weight: 0.4                  # Weight for energy cost in reward (0-1)
-  carbon_emission_weight: 0.4              # Weight for carbon emissions in reward (0-1)
+  productivity_weight: 0.6                 # Weight for productivity in reward (0-1)
+  energy_cost_weight: 0.2                  # Weight for energy cost in reward (0-1)
+  carbon_emission_weight: 0.2              # Weight for carbon emissions in reward (0-1)
 
 # Simulation parameters
 simulation:

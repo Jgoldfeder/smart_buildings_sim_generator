@@ -170,7 +170,7 @@ class RandomizedArrivalDepartureOccupancy(BaseOccupancy):
       time_step_sec: int,
       seed: Optional[int] = 17321,
       time_zone: str = 'UTC',
-      min_occupancy: float = 0.0,
+      min_occupancy: float = 0.1,
   ):
     self._zone_assignment = zone_assignment
     self._min_occupancy = min_occupancy

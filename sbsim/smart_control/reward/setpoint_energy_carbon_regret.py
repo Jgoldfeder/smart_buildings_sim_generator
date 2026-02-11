@@ -216,9 +216,13 @@ class SetpointEnergyCarbonRegretFunction(
     actual_productivity = max(actual_productivity, min_productivity)
 
     if total_occupancy > 0.0:
-      normalized_productivity_regret = (
+      # Base regret is in [-1, 0], then scale by average occupancy per zone
+      base_regret = (
           actual_productivity - min_productivity
       ) / (max_productivity - min_productivity) - 1.0
+      num_zones = len(reward_info.zone_reward_infos)
+      avg_occupancy_per_zone = total_occupancy / num_zones if num_zones > 0 else 0.0
+      normalized_productivity_regret = base_regret * avg_occupancy_per_zone
     else:
       normalized_productivity_regret = 0.0
 
