@@ -266,6 +266,16 @@ def load_scenario_from_parts(
     weather = load_weather_config(weather_path_or_name)
     config.weather = weather
 
+    # Extract weather name for unique output directory
+    weather_name = weather_path_or_name
+    if weather_path_or_name.endswith('.yaml'):
+        weather_name = os.path.basename(weather_path_or_name).replace('.yaml', '')
+    elif os.path.sep in weather_path_or_name:
+        weather_name = os.path.basename(weather_path_or_name)
+
+    # Include weather in output path to avoid race conditions
+    config.name = f"{config.name}/{weather_name}"
+
     # Override output dir if specified
     if output_base_dir:
         config.output_base_dir = output_base_dir
