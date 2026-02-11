@@ -1,0 +1,6 @@
+# Mild Winter Weather Configuration
+# 12°C - 17°C (285K - 290K)
+name: mild_winter
+high_temp: 290.0
+low_temp: 285.0
+convection_coefficient: 100.0

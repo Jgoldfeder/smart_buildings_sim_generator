@@ -1,0 +1,17 @@
+name: building_0041
+seed: 41
+floor_plan:
+  width: 570
+  height: 359
+  num_floors: 2
+  min_room_size: 58
+  max_room_size: 78
+  building_shape: u_shape
+  shape_ratio: 0.4284583586931783
+  composite_coverage: 0.7178664639072626
+ahu:
+  num_ahus: 4
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 2

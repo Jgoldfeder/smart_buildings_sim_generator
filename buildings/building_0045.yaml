@@ -1,0 +1,17 @@
+name: building_0045
+seed: 45
+floor_plan:
+  width: 613
+  height: 424
+  num_floors: 3
+  min_room_size: 32
+  max_room_size: 52
+  building_shape: pentagon
+  shape_ratio: 0.2757980278483284
+  composite_coverage: 0.4118762388064227
+ahu:
+  num_ahus: 5
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 1

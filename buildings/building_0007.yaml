@@ -1,0 +1,17 @@
+name: building_0007
+seed: 7
+floor_plan:
+  width: 477
+  height: 401
+  num_floors: 1
+  min_room_size: 32
+  max_room_size: 52
+  building_shape: oval
+  shape_ratio: 0.4053185729978271
+  composite_coverage: 0.45177152306682544
+ahu:
+  num_ahus: 6
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 1

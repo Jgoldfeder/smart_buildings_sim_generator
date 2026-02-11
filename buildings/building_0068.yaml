@@ -1,0 +1,17 @@
+name: building_0068
+seed: 68
+floor_plan:
+  width: 656
+  height: 328
+  num_floors: 2
+  min_room_size: 43
+  max_room_size: 63
+  building_shape: composite
+  shape_ratio: 0.3173079707948353
+  composite_coverage: 0.7960160991044718
+ahu:
+  num_ahus: 4
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 2

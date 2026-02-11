@@ -1,0 +1,70 @@
+# Office Building Configuration (3 floors, H-shape)
+# This file contains building-specific settings (no weather)
+
+name: office_3floor
+seed: 42
+
+# Floor plan generation parameters
+floor_plan:
+  width: 600
+  height: 300
+  num_floors: 3
+  min_room_size: 40
+  max_room_size: 60
+  wall_thickness: 1
+  door_width: 2
+  split_variance: 0.3
+  building_shape: h_shape
+  shape_ratio: 0.33
+  composite_coverage: 0.6
+
+# AHU (Air Handling Unit) configuration
+ahu:
+  num_ahus: 2
+  max_air_flow_rate: 10.0
+  recirculation_ratio: 0.3
+  heating_setpoint: 285.0
+  cooling_setpoint: 298.0
+  fan_static_pressure: 10000.0
+  fan_efficiency: 0.9
+
+# Hot water system configuration
+hot_water_system:
+  pump_differential_head: 6.0
+  pump_efficiency: 0.98
+  reheat_water_setpoint: 360.0
+  boiler_heating_rate: 0.5
+  boiler_cooling_rate: 0.1
+
+# Temperature setpoint schedule
+setpoint_schedule:
+  morning_start_hour: 6
+  evening_start_hour: 19
+  heating_setpoint_day: 294.0
+  cooling_setpoint_day: 297.0
+  heating_setpoint_night: 289.0
+  cooling_setpoint_night: 300.0
+  time_zone: "US/Pacific"
+
+# Reward function weights
+reward:
+  max_productivity_personhour_usd: 300.0
+  min_productivity_personhour_usd: 100.0
+  productivity_midpoint_delta: 0.5
+  productivity_decay_stiffness: 4.3
+  max_electricity_rate: 160000.0
+  max_natural_gas_rate: 400000.0
+  productivity_weight: 0.6
+  energy_cost_weight: 0.2
+  carbon_emission_weight: 0.2
+
+# Simulation parameters
+simulation:
+  time_step_sec: 300
+  convergence_threshold: 0.01
+  iteration_limit: 100
+  iteration_warning: 20
+  start_timestamp: "2023-07-10 06:00"
+  num_days_in_episode: 21
+  discount_factor: 0.9
+  occupants_per_zone: 1

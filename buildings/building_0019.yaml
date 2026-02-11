@@ -1,0 +1,17 @@
+name: building_0019
+seed: 19
+floor_plan:
+  width: 666
+  height: 330
+  num_floors: 2
+  min_room_size: 42
+  max_room_size: 62
+  building_shape: rectangle
+  shape_ratio: 0.28679221011105355
+  composite_coverage: 0.6910594084050559
+ahu:
+  num_ahus: 6
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 1

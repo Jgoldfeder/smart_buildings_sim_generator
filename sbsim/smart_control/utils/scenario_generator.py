@@ -191,6 +191,88 @@ def load_config(config_path: str) -> ScenarioConfig:
     return config
 
 
+# Weather preset directory (relative to package root)
+WEATHER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "weather")
+
+
+def load_weather_config(weather_path_or_name: str) -> WeatherConfig:
+    """Load weather configuration from a file or preset name.
+
+    Args:
+        weather_path_or_name: Either a path to a YAML file, or a preset name
+            (e.g., "hot_summer", "cold_winter").
+
+    Returns:
+        WeatherConfig object.
+    """
+    # Check if it's a preset name
+    if not weather_path_or_name.endswith('.yaml') and not os.path.exists(weather_path_or_name):
+        # Try as preset name
+        preset_path = os.path.join(WEATHER_DIR, f"{weather_path_or_name}.yaml")
+        if os.path.exists(preset_path):
+            weather_path_or_name = preset_path
+        else:
+            raise ValueError(f"Weather preset '{weather_path_or_name}' not found. "
+                           f"Available presets: {list_weather_presets()}")
+
+    with open(weather_path_or_name, 'r') as f:
+        raw = yaml.safe_load(f)
+
+    return WeatherConfig(
+        high_temp=raw.get('high_temp', 305.0),
+        low_temp=raw.get('low_temp', 280.0),
+        convection_coefficient=raw.get('convection_coefficient', 100.0),
+    )
+
+
+def list_weather_presets() -> List[str]:
+    """List available weather presets."""
+    if not os.path.exists(WEATHER_DIR):
+        return []
+    return [f.replace('.yaml', '') for f in os.listdir(WEATHER_DIR) if f.endswith('.yaml')]
+
+
+def load_building_config(building_path: str) -> ScenarioConfig:
+    """Load building configuration (without weather) from a YAML file.
+
+    Args:
+        building_path: Path to the building YAML configuration file.
+
+    Returns:
+        ScenarioConfig object (weather will use defaults).
+    """
+    return load_config(building_path)
+
+
+def load_scenario_from_parts(
+    building_path: str,
+    weather_path_or_name: str,
+    output_base_dir: Optional[str] = None,
+) -> ScenarioConfig:
+    """Load a scenario from separate building and weather configs.
+
+    Args:
+        building_path: Path to the building YAML configuration file.
+        weather_path_or_name: Path to weather YAML or preset name (e.g., "hot_summer").
+        output_base_dir: Override for output directory (optional).
+
+    Returns:
+        ScenarioConfig with building + weather merged.
+    """
+    # Load building config
+    config = load_building_config(building_path)
+
+    # Load and apply weather config
+    weather = load_weather_config(weather_path_or_name)
+    config.weather = weather
+
+    # Override output dir if specified
+    if output_base_dir:
+        config.output_base_dir = output_base_dir
+
+    return config
+
+
 def _generate_gin_config(
     floor_plan_path: str,
     zone_map_path: str,
@@ -681,6 +763,103 @@ def generate_scenario(config_path: str) -> Dict[str, Any]:
     }
 
 
+def generate_scenario_from_config(config: ScenarioConfig) -> Dict[str, Any]:
+    """Generate a complete simulation scenario from a ScenarioConfig object.
+
+    Same as generate_scenario but accepts a ScenarioConfig object directly.
+    Useful when building/weather configs are loaded separately.
+
+    Args:
+        config: ScenarioConfig object with all parameters.
+
+    Returns:
+        Same as generate_scenario().
+    """
+    # Set random seed if specified
+    if config.seed is not None:
+        random.seed(config.seed)
+        np.random.seed(config.seed)
+
+    # Create output directory
+    output_dir = os.path.join(config.output_base_dir, config.name)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Generate floor plan
+    fp = config.floor_plan
+    if fp.num_floors > 1:
+        generator = MultiFloorPlan(
+            width=fp.width,
+            height=fp.height,
+            num_floors=fp.num_floors,
+            min_room_size=fp.min_room_size,
+            max_room_size=fp.max_room_size,
+            wall_thickness=fp.wall_thickness,
+            door_width=fp.door_width,
+            split_variance=fp.split_variance,
+            building_shape=fp.building_shape,
+            shape_ratio=fp.shape_ratio,
+            composite_coverage=fp.composite_coverage,
+        )
+    else:
+        generator = BSPFloorPlan(
+            width=fp.width,
+            height=fp.height,
+            min_room_size=fp.min_room_size,
+            max_room_size=fp.max_room_size,
+            wall_thickness=fp.wall_thickness,
+            door_width=fp.door_width,
+            split_variance=fp.split_variance,
+            building_shape=fp.building_shape,
+            shape_ratio=fp.shape_ratio,
+            composite_coverage=fp.composite_coverage,
+        )
+
+    generator.generate()
+
+    # Save floor plan and zone map
+    floor_plan_path = os.path.join(output_dir, "floor_plan.npy")
+    zone_map_path = os.path.join(output_dir, "zone_map.npy")
+    generator.save_for_simulator(floor_plan_path, zone_map_path)
+
+    # Get room count and assign to AHUs
+    num_rooms = generator.get_num_rooms()
+    ahu_assignments = assign_rooms_to_ahus(
+        num_rooms,
+        config.ahu.num_ahus,
+        seed=config.seed
+    )
+
+    # Generate and save gin config
+    gin_config = _generate_gin_config(
+        floor_plan_path,
+        zone_map_path,
+        ahu_assignments,
+        config,
+    )
+    gin_config_path = os.path.join(output_dir, "config.gin")
+    with open(gin_config_path, 'w') as f:
+        f.write(gin_config)
+
+    # Save merged config to output directory
+    import dataclasses
+    config_copy_path = os.path.join(output_dir, "config.yaml")
+    with open(config_copy_path, 'w') as f:
+        yaml.dump(dataclasses.asdict(config), f, default_flow_style=False)
+
+    return {
+        'name': config.name,
+        'output_dir': output_dir,
+        'floor_plan_path': floor_plan_path,
+        'zone_map_path': zone_map_path,
+        'gin_config_path': gin_config_path,
+        'num_rooms': num_rooms,
+        'num_ahus': config.ahu.num_ahus,
+        'ahu_assignments': ahu_assignments,
+        'bsp': generator,
+        'config': config,
+    }
+
+
 def generate_scenario_from_dict(config_dict: Dict[str, Any]) -> Dict[str, Any]:
     """Generate a scenario from a configuration dictionary.
 
@@ -869,7 +1048,7 @@ class SimulationTracker:
         tracker.summary()
     """
 
-    def __init__(self, env, vmin: float = 280, vmax: float = 305):
+    def __init__(self, env, vmin: float = 280, vmax: float = 310):
         """Initialize tracker.
 
         Args:

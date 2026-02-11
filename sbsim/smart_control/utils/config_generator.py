@@ -9,15 +9,15 @@ import yaml
 
 BUILDING_SHAPES = [
     "rectangle", "trapezoid", "h_shape", "t_shape", "pentagon",
-    "oval", "u_shape", "parallelogram", "semicircle", "triangle"
+    "oval", "u_shape", "parallelogram", "semicircle", "triangle", "composite"
 ]
 
-# Climate presets: (low_temp_K, high_temp_K, name)
+# Climate presets: (low_temp_K, high_temp_K)
 CLIMATES = {
-    "hot_summer": (295.0, 313.0),      # 22C-40C
-    "mild_summer": (288.0, 303.0),     # 15C-30C
-    "cold_winter": (263.0, 278.0),     # -10C-5C
-    "mild_winter": (273.0, 288.0),     # 0C-15C
+    "hot_summer": (305.0, 309.0),      # 32C-36C
+    "mild_summer": (300.0, 305.0),     # 27C-32C
+    "cold_winter": (280.0, 285.0),     # 7C-12C
+    "mild_winter": (285.0, 290.0),     # 12C-17C
     "tropical": (297.0, 308.0),        # 24C-35C
     "temperate": (283.0, 298.0),       # 10C-25C
 }
@@ -55,9 +55,6 @@ class DatasetConfig:
     # AHU variations
     num_ahus_range: Tuple[int, int] = (1, 6)
 
-    # Climate variations
-    climates: List[str] = field(default_factory=lambda: list(CLIMATES.keys()))
-
     # Occupancy variations
     occupants_per_zone_range: Tuple[int, int] = (1, 10)
 
@@ -93,18 +90,13 @@ def generate_config(
     composite_coverage = 0.6,    # For composite shape: min canvas coverage (0.0-1.0)
     # AHU
     num_ahus = 2,
-    # Weather
-    climate = "mild_summer",
-    low_temp: Optional[float] = None,
-    high_temp: Optional[float] = None,
     # Occupancy
     occupants_per_zone = 1,
     # Simulation
     num_days_in_episode = 21,
     start_timestamp: str = "2023-07-10 06:00",
-    output_base_dir: str = "scenarios",
 ) -> dict:
-    """Generate a single config dict.
+    """Generate a building config dict (no weather - use weather presets separately).
 
     All numeric params can be:
         - A single value: width=400
@@ -126,18 +118,12 @@ def generate_config(
     shape_ratio = _sample(shape_ratio, rng)
     composite_coverage = _sample(composite_coverage, rng)
     num_ahus = _sample(num_ahus, rng)
-    climate = _sample(climate, rng)
     occupants_per_zone = _sample(occupants_per_zone, rng)
     num_days_in_episode = _sample(num_days_in_episode, rng)
-
-    # Get climate temps if not specified
-    if low_temp is None or high_temp is None:
-        low_temp, high_temp = CLIMATES.get(climate, CLIMATES["mild_summer"])
 
     config = {
         "name": name,
         "seed": seed,
-        "output_base_dir": output_base_dir,
 
         "floor_plan": {
             "width": width,
@@ -154,11 +140,6 @@ def generate_config(
             "num_ahus": num_ahus,
         },
 
-        "weather": {
-            "high_temp": high_temp,
-            "low_temp": low_temp,
-        },
-
         "simulation": {
             "start_timestamp": start_timestamp,
             "num_days_in_episode": num_days_in_episode,
@@ -173,8 +154,10 @@ def generate_random_config(
     index: int,
     dataset_config: DatasetConfig,
 ) -> dict:
-    """Generate a random config based on dataset config ranges."""
+    """Generate a random building config based on dataset config ranges.
 
+    Note: Weather is handled separately via weather presets in weather/ directory.
+    """
     seed = dataset_config.base_seed + index
     random.seed(seed)
 
@@ -187,11 +170,10 @@ def generate_random_config(
     shape_ratio = random.uniform(*dataset_config.shape_ratio_range)
     composite_coverage = random.uniform(*dataset_config.composite_coverage_range)
     num_ahus = random.randint(*dataset_config.num_ahus_range)
-    climate = random.choice(dataset_config.climates)
     occupants = random.randint(*dataset_config.occupants_per_zone_range)
     num_days = random.randint(*dataset_config.num_days_range)
 
-    name = f"env_{index:04d}_{shape}_{climate}"
+    name = f"env_{index:04d}_{shape}"
 
     return generate_config(
         name=name,
@@ -204,10 +186,8 @@ def generate_random_config(
         shape_ratio=shape_ratio,
         composite_coverage=composite_coverage,
         num_ahus=num_ahus,
-        climate=climate,
         occupants_per_zone=occupants,
         num_days_in_episode=num_days,
-        output_base_dir=dataset_config.output_dir,
     )
 
 
@@ -237,9 +217,11 @@ def generate_dataset_configs(
 
 def save_configs(
     configs: List[dict],
-    output_dir: str = "dataset/configs",
+    output_dir: str = "buildings",
 ) -> List[str]:
-    """Save configs to YAML files.
+    """Save building configs to YAML files.
+
+    Note: Weather is handled separately via weather presets in weather/ directory.
 
     Returns:
         List of saved file paths
@@ -258,14 +240,17 @@ def save_configs(
 
 
 def generate_and_save_dataset(
-    output_dir: str = "dataset",
+    output_dir: str = "buildings",
     num_configs: int = 100,
     **kwargs
 ) -> List[str]:
-    """Generate and save a dataset of config files.
+    """Generate and save a dataset of building config files.
+
+    Note: Weather is handled separately via weather presets in weather/ directory.
+    Use run_baselines.py --building <path> to run against all weather presets.
 
     Args:
-        output_dir: Directory to save configs
+        output_dir: Directory to save configs (default: buildings/)
         num_configs: Number of configs to generate
         **kwargs: Additional DatasetConfig parameters
 
@@ -279,21 +264,23 @@ def generate_and_save_dataset(
     )
 
     configs = generate_dataset_configs(dataset_config)
-    config_dir = os.path.join(output_dir, "configs")
-    paths = save_configs(configs, config_dir)
+    paths = save_configs(configs, output_dir)
 
-    print(f"Generated {len(paths)} configs in {config_dir}")
+    print(f"Generated {len(paths)} building configs in {output_dir}")
     return paths
 
 
 # Convenience function for quick generation
-def quick_dataset(n: int = 10, output_dir: str = "dataset") -> List[str]:
-    """Quick way to generate a small dataset.
+def quick_dataset(n: int = 10, output_dir: str = "buildings") -> List[str]:
+    """Quick way to generate a small dataset of building configs.
 
     Example:
         paths = quick_dataset(10)
         for path in paths:
-            env = get_env_from_config(path)
+            # Use with weather presets
+            config = load_scenario_from_parts(path, "hot_summer")
+            result = generate_scenario_from_config(config)
+            env = get_env(result)
     """
     return generate_and_save_dataset(output_dir=output_dir, num_configs=n)
 
@@ -301,17 +288,30 @@ def quick_dataset(n: int = 10, output_dir: str = "dataset") -> List[str]:
 def visualize_config(config: dict):
     """Generate scenario from config dict and visualize AHU zones.
 
+    Uses a temp directory to avoid creating permanent output files.
+
     Args:
         config: Config dict from generate_config()
     """
+    import tempfile
+    import shutil
     from sbsim.smart_control.utils.scenario_generator import generate_scenario_from_dict
     from sbsim.smart_control.utils.floor_generator import visualize_ahu_zones
 
-    # Generate scenario from config dict
-    result = generate_scenario_from_dict(config)
+    # Use temp directory to avoid polluting scenarios/
+    temp_dir = tempfile.mkdtemp()
+    try:
+        # Add temp output dir to config
+        config_with_output = config.copy()
+        config_with_output['output_base_dir'] = temp_dir
 
-    print(f"Generated {result['num_rooms']} rooms with {result['num_ahus']} AHUs")
-    print(f"Shape: {config['floor_plan']['building_shape']}")
+        result = generate_scenario_from_dict(config_with_output)
 
-    visualize_ahu_zones(result['bsp'], result['ahu_assignments'],
-                        title=f"{config['name']} - AHU Zones")
+        print(f"Generated {result['num_rooms']} rooms with {result['num_ahus']} AHUs")
+        print(f"Shape: {config['floor_plan']['building_shape']}")
+
+        visualize_ahu_zones(result['bsp'], result['ahu_assignments'],
+                            title=f"{config['name']} - AHU Zones")
+    finally:
+        # Clean up temp files
+        shutil.rmtree(temp_dir, ignore_errors=True)

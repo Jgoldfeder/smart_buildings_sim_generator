@@ -1,0 +1,17 @@
+name: building_0012
+seed: 12
+floor_plan:
+  width: 537
+  height: 468
+  num_floors: 3
+  min_room_size: 34
+  max_room_size: 54
+  building_shape: parallelogram
+  shape_ratio: 0.2954102557354801
+  composite_coverage: 0.9481422264584524
+ahu:
+  num_ahus: 5
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 2

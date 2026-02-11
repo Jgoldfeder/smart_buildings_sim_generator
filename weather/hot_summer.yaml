@@ -1,0 +1,6 @@
+# Hot Summer Weather Configuration
+# 32°C - 36°C (305K - 309K)
+name: hot_summer
+high_temp: 309.0
+low_temp: 305.0
+convection_coefficient: 100.0

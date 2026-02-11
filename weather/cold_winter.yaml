@@ -1,0 +1,6 @@
+# Cold Winter Weather Configuration
+# 7°C - 12°C (280K - 285K)
+name: cold_winter
+high_temp: 285.0
+low_temp: 280.0
+convection_coefficient: 100.0

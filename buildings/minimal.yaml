@@ -1,0 +1,21 @@
+# Minimal Building Configuration
+# ===============================
+# Simple 2-floor H-shaped building for quick testing
+
+name: minimal
+seed: 42
+
+floor_plan:
+  num_floors: 2
+  width: 600
+  height: 300
+  min_room_size: 40
+  building_shape: "h_shape"
+
+ahu:
+  num_ahus: 2
+
+simulation:
+  start_timestamp: "2023-07-10 06:00"
+  num_days_in_episode: 7
+  occupants_per_zone: 3

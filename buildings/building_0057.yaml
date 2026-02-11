@@ -1,0 +1,17 @@
+name: building_0057
+seed: 57
+floor_plan:
+  width: 588
+  height: 450
+  num_floors: 1
+  min_room_size: 37
+  max_room_size: 57
+  building_shape: composite
+  shape_ratio: 0.3285315348230674
+  composite_coverage: 0.9371553749780942
+ahu:
+  num_ahus: 4
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 2

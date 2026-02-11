@@ -1,0 +1,6 @@
+# Tropical Weather Configuration
+# 24°C - 35°C (297K - 308K)
+name: tropical
+high_temp: 308.0
+low_temp: 297.0
+convection_coefficient: 100.0

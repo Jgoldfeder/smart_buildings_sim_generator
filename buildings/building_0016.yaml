@@ -1,0 +1,17 @@
+name: building_0016
+seed: 16
+floor_plan:
+  width: 640
+  height: 423
+  num_floors: 3
+  min_room_size: 43
+  max_room_size: 63
+  building_shape: oval
+  shape_ratio: 0.25666117080815
+  composite_coverage: 0.40321947392250335
+ahu:
+  num_ahus: 4
+simulation:
+  start_timestamp: 2023-07-10 06:00
+  num_days_in_episode: 21
+  occupants_per_zone: 1

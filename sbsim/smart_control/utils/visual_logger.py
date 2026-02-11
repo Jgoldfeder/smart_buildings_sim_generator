@@ -68,7 +68,7 @@ class VisualLogger:
       file_path: str,
       fps: int,
       vmin: int = 280,
-      vmax: int = 300,
+      vmax: int = 310,
       cmap: str = 'rainbow',
       alpha: float = 1.0,
       wall_color: str = 'black',

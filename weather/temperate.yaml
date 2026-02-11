@@ -1,0 +1,6 @@
+# Temperate Weather Configuration
+# 10°C - 25°C (283K - 298K)
+name: temperate
+high_temp: 298.0
+low_temp: 283.0
+convection_coefficient: 100.0

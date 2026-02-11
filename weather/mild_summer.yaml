@@ -1,0 +1,6 @@
+# Mild Summer Weather Configuration
+# 27°C - 32°C (300K - 305K)
+name: mild_summer
+high_temp: 305.0
+low_temp: 300.0
+convection_coefficient: 100.0
