@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>building_0067 - Smart Buildings Results</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 20px; background: #f5f5f5;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .nav { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .nav a {
+            padding: 8px 16px; background: #4a90d9; color: white;
+            text-decoration: none; border-radius: 4px; font-size: 14px;
+        }
+        .nav a:hover { background: #357abd; }
+        .nav a.active { background: #2d6da3; }
+        .section {
+            background: white; padding: 20px; margin-bottom: 20px;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #4a90d9; color: white; }
+        .policy-header { background: #5ba55b !important; color: white; font-weight: bold; }
+        .reward-high { background: #c8e6c9; }
+        .reward-mid { background: #fff9c4; }
+        .reward-low { background: #ffcdd2; }
+        .pending { color: #999; }
+        .gif-grid {
+            display: grid;
+            grid-template-columns: auto repeat(6, 1fr);
+            gap: 8px;
+            align-items: start;
+        }
+        .gif-grid img {
+            width: 100%; max-width: 200px; border-radius: 4px;
+            transition: transform 0.2s;
+        }
+        .gif-grid img:hover { transform: scale(1.02); }
+        .gif-cell { text-align: center; }
+        .header-cell { font-weight: bold; padding: 8px; font-size: 12px; }
+        .weather-header { background: #4a90d9; color: white; border-radius: 4px; }
+        .policy-cell {
+            background: #5ba55b; color: white; border-radius: 4px;
+            writing-mode: vertical-rl; text-orientation: mixed;
+            padding: 15px 8px;
+        }
+        @media (max-width: 900px) {
+            .gif-grid { grid-template-columns: auto repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Buildings Simulation Results</h1>
+
+    <div class="nav">
+        <a href="building_0002.html" class="">building_0002</a>
+        <a href="building_0007.html" class="">building_0007</a>
+        <a href="building_0009.html" class="">building_0009</a>
+        <a href="building_0012.html" class="">building_0012</a>
+        <a href="building_0013.html" class="">building_0013</a>
+        <a href="building_0014.html" class="">building_0014</a>
+        <a href="building_0015.html" class="">building_0015</a>
+        <a href="building_0016.html" class="">building_0016</a>
+        <a href="building_0018.html" class="">building_0018</a>
+        <a href="building_0019.html" class="">building_0019</a>
+        <a href="building_0041.html" class="">building_0041</a>
+        <a href="building_0042.html" class="">building_0042</a>
+        <a href="building_0045.html" class="">building_0045</a>
+        <a href="building_0054.html" class="">building_0054</a>
+        <a href="building_0056.html" class="">building_0056</a>
+        <a href="building_0063.html" class="">building_0063</a>
+        <a href="building_0066.html" class="">building_0066</a>
+        <a href="building_0067.html" class="active">building_0067</a>
+    </div>
+
+    <div class="section">
+        <h2>Rewards Heatmap</h2>
+        <table>
+            <tr><th></th><th>Cold Winter</th><th>Mild Winter</th><th>Temperate</th><th>Mild Summer</th><th>Hot Summer</th><th>Tropical</th></tr>
+            <tr><td class="policy-header">All Off</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td></tr>
+            <tr><td class="policy-header">All On</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td></tr>
+            <tr><td class="policy-header">Bang-Bang</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td><td class="pending">-</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Simulation Results</h2>
+        <p><em>Overview snapshots for each weather/policy combination</em></p>
+        <div class="gif-grid">
+            <div></div>
+            <div class="header-cell weather-header">Cold Winter</div>
+            <div class="header-cell weather-header">Mild Winter</div>
+            <div class="header-cell weather-header">Temperate</div>
+            <div class="header-cell weather-header">Mild Summer</div>
+            <div class="header-cell weather-header">Hot Summer</div>
+            <div class="header-cell weather-header">Tropical</div>
+            <div class="header-cell policy-cell">All Off</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="header-cell policy-cell">All On</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="header-cell policy-cell">Bang-Bang</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+            <div class="gif-cell pending">pending</div>
+        </div>
+    </div>
+</body>
+</html>
